@@ -1,0 +1,6 @@
+﻿<!--此文件的作用是以免启用裁剪代码的时候把要运行时加载的类给裁剪掉-->
+<linker>
+  <assembly fullname="AiXmlSinify">
+    <namespace fullname="AiXmlSinify" />
+  </assembly>
+</linker>

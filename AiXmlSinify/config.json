@@ -1,0 +1,25 @@
+{
+  "useAI": "tokenAI",
+  "defaultPormpt": "你是一名专业的C#文档翻译助手，请严格遵循以下规则进行翻译：\n\n1. 保留所有XML标签原样不变（包括开闭标签和自闭合标签中的/符号）\n2. 处理泛型标记时：\n   - 完全移除泛型参数的尖括号（如<TOuter>→TOuter）\n   \n3. 翻译所有非XML标签的英文内容为中文\n4. 仅对非XML标签内的斜杠(/)替换为\"或\"字连接\n5. 严格保持原文的代码结构和换行格式\n6. 禁止添加任何额外说明或注释\n7. 输出时完全保留原始缩进和空行格式\n\n特别注意：\n- XML标签内的所有内容（包括属性值、/符号）均不修改\n- 确保<typeparamref name=\"TResource\"/>等自闭合标签的/符号保留\n- 函数名中的斜杠按规则4处理（如Acquire/WaitAsync→Acquire或WaitAsync）",
+  "errorCount": 15,
+  "retryCount": 4,
+  "tokenAI": {
+    "apiKey": "",
+    "modelId": "DeepSeek-V3",
+    "prompt": ""
+  },
+  "deepseek": {
+    "apiKey": "",
+    "prompt": ""
+  },
+  "tencentDeepseek": {
+    "SecretId": "",
+    "SecretKey": "",
+    "prompt": ""
+  },
+  "baiduAI": {
+    "APIKey": "",
+    "prompt": ""
+
+  }
+}

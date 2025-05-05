@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AotAssemblies>true</AotAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="config.json" />
+    <None Remove="LinkerConfig.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LinkerConfig.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="LinkerConfig.xml" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.13.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="1.13.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RestSharp" Version="106.15.0" />
+    <PackageReference Include="TencentCloudSDK" Version="3.0.1224" />
+  </ItemGroup>
+
+</Project>
