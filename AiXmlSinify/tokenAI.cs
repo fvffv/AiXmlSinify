@@ -20,7 +20,7 @@ namespace AiXmlSinify
         public void Init(params string[] args) {
             prompt = args[2];
             var hc = new HttpClient(new OpenAIHttpClientHandler("https://api.token-ai.cn/") { MaxConnectionsPerServer = 100000 });
-            hc.Timeout = TimeSpan.FromSeconds(30);
+            hc.Timeout = TimeSpan.FromSeconds(60);
             System.Net.ServicePointManager.DefaultConnectionLimit = 512;
             kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
