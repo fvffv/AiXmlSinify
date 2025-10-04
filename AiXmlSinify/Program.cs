@@ -1,7 +1,8 @@
-﻿
+
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Security;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -20,15 +21,15 @@ namespace AiXmlSinify
         {
 
 
-            //string[] tmpp = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "Cache/", "*.xml", SearchOption.AllDirectories);
-            //foreach (string p in tmpp)
-            //{
-            //    string ff = await GetFileMd5Async(p);
-            //    File.Move(p, AppDomain.CurrentDomain.BaseDirectory + "Cache/" + Path.GetFileNameWithoutExtension(p) + "#" + ff + ".xml");
-            //}
+        //string[] tmpp = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "Cache/", "*.xml", SearchOption.AllDirectories);
+        //foreach (string p in tmpp)
+        //{
+        //    string ff = await GetFileMd5Async(p);
+        //    File.Move(p, AppDomain.CurrentDomain.BaseDirectory + "Cache/" + Path.GetFileNameWithoutExtension(p) + "#" + ff + ".xml");
+        //}
+        TOP:
 
 
-            
 
             List<string> XmlFile = new List<string>();
             XmlDocument doc = new XmlDocument();
@@ -48,7 +49,7 @@ namespace AiXmlSinify
             //整个if是为了在管理员模式前实现拖入功能，因为系统限制 管理员后无法拖入，并且需要管理员权限写出文件
             if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "pathFile.tmp"))
             {
-                Cache2 = LoadCache();
+                Cache2 = await LoadCache();
                 XmlFile = File.ReadAllLines(AppDomain.CurrentDomain.BaseDirectory + "pathFile.tmp").ToList();
                 foreach (string fileUrl in XmlFile)
                 {
@@ -99,7 +100,11 @@ namespace AiXmlSinify
                 //检查创建配置文件
                 CreateConfig(path);
                 //启用拖入功能
-                EnableDragDrop();
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)==false)
+                {
+                    EnableDragDrop();
+                }
+                
                 Console.WriteLine("此程序用于汉化Visual Studio的代码提示的Xml文件，可以汉化c#以及外部导入的包的代码提示的Xml文件");
                 Console.WriteLine("一般情况c#自带的包代码提示文件在：C:\\Program Files\\dotnet\\packs");
                 Console.WriteLine("外部的Nuget包语言文件地址：C:\\Users\\lu\\.nuget\\packages");
@@ -108,7 +113,15 @@ namespace AiXmlSinify
                 
             error1:
                 //获取Xml汉化文件
-               if(GetXmlFiles(XmlFile) ==0) { goto error1; }
+               if(GetXmlFiles(XmlFile) ==0) 
+                {
+
+                    goto error1; 
+                }
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    goto TOP;
+                }
             }
 
 
@@ -263,8 +276,9 @@ namespace AiXmlSinify
         /// 加载本地缓存
         /// </summary>
         /// <returns></returns>
-        private static ConcurrentDictionary<string, string> LoadCache()
+        private static ConcurrentDictionary<string, string> LoadCache2()
         {
+            var  beforDT = System.DateTime.Now;
             Console.WriteLine("正在加载本地缓存，请稍等");
             ConcurrentDictionary<string, string> cache2 = new ConcurrentDictionary<string, string>();
             string[] filesPath = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "Cache/", "*.xml", SearchOption.AllDirectories);
@@ -283,10 +297,61 @@ namespace AiXmlSinify
                 }
                
             }
-            Console.WriteLine($"已加载本地缓存 {cache2.Count} 个");
+            var afterDT = System.DateTime.Now;
+            
+            Console.WriteLine($"已加载本地缓存 {cache2.Count} 个,耗时：{afterDT.Subtract(beforDT)}");
             return cache2;
         }
 
+
+        private static async Task<ConcurrentDictionary<string, string>> LoadCache()
+        {
+            var beforDT = System.DateTime.Now;
+            Console.WriteLine("正在加载本地缓存，请稍等");
+            ConcurrentDictionary<string, string> cache2 = new ConcurrentDictionary<string, string>();
+            string[] filesPath = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "Cache/", "*.xml", SearchOption.AllDirectories);
+
+            List<Task> tasks = new List<Task>();
+            foreach (var file in filesPath)
+            {
+
+
+                tasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        // 使用FileStream异步读取
+                        using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+
+                        var doc = new XmlDocument();
+
+                        doc.Load(fileStream);
+                        XmlNodeList list = doc.SelectNodes("/doc/members/member");
+                        for (int i = 0; i < list.Count; i++)
+                        {
+                            cache2.TryAdd(list[i].Attributes["name"].Value, list[i].InnerXml);
+
+
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
+                }));
+
+
+
+
+
+            }
+            await Task.WhenAll(tasks);
+            var afterDT = System.DateTime.Now;
+            Console.WriteLine($"已加载本地缓存 {cache2.Count} 个,耗时：{afterDT.Subtract(beforDT)}");
+            return cache2;
+        }
         /// <summary>
         /// 解析用户输入的地址递归查找所有的xml文件 查到的话就重启进入管理员模式
         /// </summary>
@@ -294,31 +359,45 @@ namespace AiXmlSinify
         /// <returns></returns>
         private static int GetXmlFiles(List<string> XmlFile)
         {
-            string[] tempFileUrls = ProcessingPath(Console.ReadLine());
-
-            foreach (string fileUrl in tempFileUrls)
+            string[] tempFileUrls;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                //如果是文件且是.xml后缀的话则添加到XmlFile
-                if (Path.GetExtension(fileUrl) == ".xml")
-                {
-                    XmlFile.Add(fileUrl);
-                }
-                //如果是文件夹 枚举文件
-                if (Directory.Exists(fileUrl))
-                {
-                    XmlFile.AddRange(Directory.GetFiles(fileUrl, "*.xml", SearchOption.AllDirectories));
-                }
-
-
+                tempFileUrls = new string[] { Console.ReadLine() };
             }
+            else
+            {
+                 tempFileUrls = ProcessingPath(Console.ReadLine());
+            }
+
+           
+                foreach (string fileUrl in tempFileUrls)
+                {
+                 Console.WriteLine($"测试：{Directory.Exists(fileUrl)}");
+                    //如果是文件且是.xml后缀的话则添加到XmlFile
+                    if (Path.GetExtension(fileUrl) == ".xml")
+                    {
+                        XmlFile.Add(fileUrl);
+                    }
+                    //如果是文件夹 枚举文件
+                    if (Directory.Exists(fileUrl))
+                    {
+                        XmlFile.AddRange(Directory.GetFiles(fileUrl, "*.xml", SearchOption.AllDirectories));
+                    }
+
+
+                }
             if (XmlFile.Count == 0)
             {
                 Console.WriteLine("无可翻译xml文件！请重新输入：");
                 return 0;
             }
             File.WriteAllLines(AppDomain.CurrentDomain.BaseDirectory + "pathFile.tmp", XmlFile);
-            //重启管理员模式
-            RestartAsAdministrator();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == false)
+            {
+                //重启管理员模式
+                RestartAsAdministrator();
+            }
+
             return 1;
         }
 
