@@ -25,7 +25,7 @@
 
 ### 1. 下载软件
 - **GitHub Releases**：右侧下载  
-- **国内蓝奏云**：[下载地址](https://wwos.lanzoub.com/itLXE37nacef)  
+- **国内蓝奏云**：[下载地址](https://wwos.lanzoub.com/i9AZl37pnxsf)  
 
 ### 2. 解压
 **务必保留 `Cache` 文件夹**，否则无法使用预汉化缓存，将直接调用 API 消耗 Token。
